@@ -1,10 +1,10 @@
-#lang scheme
+#lang racket
 (require (for-syntax syntax/parse
-                     scheme/list
-                     scheme/function
-                     "stx.ss")
-         "stx.ss"
-         scheme/generator)
+                     racket/list
+                     racket/function
+                     "stx.rkt")
+         "stx.rkt"
+         racket/generator)
 
 (define-struct model (rules))
 (define-struct query ())
@@ -102,6 +102,7 @@
            ...
            (define new-env (unify env head-sans-vars query))         
            (generator
+            ()
             (when new-env
               (let ([body-sans-vars (list body-query-sans-vars ...)])
                 (reyield yield (model-env-generator/queries model new-env body-sans-vars))))
@@ -116,6 +117,7 @@
 
 (define (model-env-generator/queries m env qs)
   (generator
+   ()
    (match qs
      [(list) (yield env)]
      [(list-rest q1 qs)
@@ -125,6 +127,7 @@
 
 (define (model-env-generator m env first-query)
   (generator
+   ()
    (match first-query
      [(struct sexpr-query (q-se))
       (for ([rule (in-list (model-rules m))])
@@ -160,6 +163,7 @@
 (define (query-answer-generator m q)
   (define init-vars (variables-in q))
   (generator
+   ()
    (for ([ans (in-producer (model-env-generator m (make-immutable-hasheq empty) q)
                            generator-done)])
      (yield (env-restrict ans init-vars)))

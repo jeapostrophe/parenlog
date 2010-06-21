@@ -1,9 +1,9 @@
-#lang scheme
-(require (for-syntax scheme/list)
-         "parenlog.ss"
-         "core.ss")
+#lang racket
+(require (for-syntax racket/list)
+         "parenlog.rkt"
+         "core.rkt")
 
-(provide (except-out (all-from-out scheme)
+(provide (except-out (all-from-out racket)
                      #%module-begin
                      #%top-interaction)
          ? next 

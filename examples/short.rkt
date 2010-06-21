@@ -1,6 +1,6 @@
-#lang scheme
+#lang racket
 (require tests/eli-tester
-         "../parenlog.ss")
+         "../parenlog.rkt")
 
 (define-model family-tree
   (advisor barwise feferman)

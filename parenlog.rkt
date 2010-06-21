@@ -1,6 +1,6 @@
-#lang scheme
+#lang racket
 (require (for-syntax syntax/parse)
-         "core.ss")
+         "core.rkt")
 
 (define-syntax (:- stx)
   (raise-syntax-error ':- "Cannot be used outside define-model" stx))

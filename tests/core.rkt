@@ -1,5 +1,6 @@
-#lang scheme
-(require "../core.ss"
+#lang racket
+(require "../core.rkt"
+         "../stx.rkt"
          tests/eli-tester)
 
 (test
