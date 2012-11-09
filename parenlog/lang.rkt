@@ -1,9 +1,10 @@
-#lang racket
-(require (for-syntax racket/list)
+#lang racket/base
+(require (for-syntax racket/base
+                     racket/list)
          "parenlog.rkt"
          "core.rkt")
 
-(provide (except-out (all-from-out racket)
+(provide (except-out (all-from-out racket/base)
                      #%module-begin
                      #%top-interaction)
          ? next 

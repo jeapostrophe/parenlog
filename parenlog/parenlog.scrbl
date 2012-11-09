@@ -3,17 +3,14 @@
           scribble/eval
           scribble/basic
           scribble/bnf
-          unstable/planet
-          unstable/scribble
           (for-label racket/base
                      racket/function
                      racket/contract
-                     "main.ss"
-                     (only-in "lang.ss" ? next)))
+                     "main.rkt"))
 
 @(define the-eval
    (let ([the-eval (make-base-eval)])
-     (the-eval `(require (planet ,(this-package-version-symbol))))
+     (the-eval `(require parenlog))
      the-eval))
 
 @title[#:tag "top"]{@bold{Parenlog}}
@@ -25,7 +22,7 @@ This package contains an implementation of a language very similar to pure @link
 
 The easiest way to get started using Parenlog for Racket is with the main module:
 
-@defmodule/this-package[]
+@defmodule[parenlog]
 
 Here is a basic example of using Parenlog:
 
@@ -91,11 +88,9 @@ Here is a basic example of using Parenlog:
 
 @section{Standalone Parenlog}
 
-@defmodule/this-package[lang]
+@defmodulelang[parenlog]
 
 Parenlog can also be used as a standalone module language.
-
-@(racket #,(hash-lang) planet #,(this-package-version-symbol))
 
 At a high level, the body of a Parenlog module is the body of a @racket[define-model] form and any REPL interaction is placed within a
 @racket[query-model] form. There are, of course, a few caveats.
@@ -113,8 +108,7 @@ displays like:
 Third, @racket[next] can be input at the REPL to search for another answer to the last query. If there was no last query, this evaluates to an error. If there are no more answers, @litchar{done} is printed.
 
 Here is a sample module:
-@racketblock[
- #,(hash-lang) planet #,(this-package-version-symbol)
+@racketmod[parenlog
  (type Gamma numConst num)
  (type Gamma boolConst bool)
 

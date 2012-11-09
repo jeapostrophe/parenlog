@@ -2,7 +2,9 @@
 (define name "Parenlog")
 (define blurb
   (list "A language that is similar to Prolog"))
-(define scribblings '(["parenlog.scrbl" ()]))
+
+(define scribblings '(["parenlog.scrbl" (multi-page) (language)]))
+
 (define categories '(devtools))
 (define version "1.0")
 (define primary-file "main.rkt")

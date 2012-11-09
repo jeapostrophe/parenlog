@@ -1,4 +1,4 @@
-#lang planet jaymccarthy/parenlog
+#lang parenlog
 
 (type Gamma numConst num)
 (type Gamma boolConst bool)

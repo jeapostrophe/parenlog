@@ -1,8 +1,13 @@
-#lang racket
+#lang racket/base
 (require (for-syntax syntax/parse
+                     racket/base
                      racket/list
                      racket/function
                      "stx.rkt")
+         racket/local
+         racket/match
+         racket/function
+         racket/list
          "stx.rkt"
          racket/generator)
 
@@ -179,7 +184,7 @@
    stx #:literals (unquote)
    [(_ ((unquote f) arg ...))
     (syntax/loc stx
-      (make-fun-query f (list 'arg ...)))]
+                (make-fun-query f (list 'arg ...)))]
    [(_ query)
     (syntax/loc stx
       (make-sexpr-query 'query))]))

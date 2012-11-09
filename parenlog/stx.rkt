@@ -1,4 +1,4 @@
-#lang racket
+#lang racket/base
 (define (variable? q)
   (and (symbol? q)
        (char-upper-case?

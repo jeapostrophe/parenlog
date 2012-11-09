@@ -1,5 +1,6 @@
-#lang racket
-(require (for-syntax syntax/parse)
+#lang racket/base
+(require (for-syntax racket/base
+                     syntax/parse)
          "core.rkt")
 
 (define-syntax (:- stx)

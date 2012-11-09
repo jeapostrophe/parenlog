@@ -1,6 +1,6 @@
-#lang racket
+#lang racket/base
 (require tests/eli-tester
-         "../parenlog.rkt")
+         parenlog)
 
 (define-model family-tree
   (advisor barwise feferman)

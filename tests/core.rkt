@@ -1,6 +1,6 @@
-#lang racket
-(require "../core.rkt"
-         "../stx.rkt"
+#lang racket/base
+(require parenlog/core
+         parenlog/stx
          tests/eli-tester)
 
 (test
