@@ -105,7 +105,7 @@ displays like:
  #,(racketoutput "Y=larn")
 ]
 
-Third, @racket[next] can be input at the REPL to search for another answer to the last query. If there was no last query, this evaluates to an error. If there are no more answers, @litchar{done} is printed.
+Third, @racket[next] searches for another answer to the last query. If there was no last query, this evaluates to an error. If there are no more answers, @litchar{done} is printed.
 
 Here is a sample module:
 @racketmod[parenlog
@@ -152,5 +152,5 @@ We can then query the model from the REPL:
 }
 
 @defidform[next]{
- Syntax that may only appear within the REPL of a Parenlog module.
+ Syntax that may only appear within the body of a Parenlog module.
 }

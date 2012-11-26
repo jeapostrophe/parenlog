@@ -26,23 +26,25 @@
     [(_ e ...)
      (let-values ([(stmts queries)
                    (partition (lambda (stx)
-                                (syntax-case stx (?)
+                                (syntax-case stx (? next)
                                   [(? e) #f]
+                                  [next #f]
                                   [_ #t]))
                               (syntax->list #'(e ...)))])
        (with-syntax ([(e-stmt ...) stmts]
                      [(e-query ...) 
                       (map (lambda (stx)
-                             (syntax-case stx (?)
-                               [(? e) #'e]))
+                             #`(pl-top-interaction .
+                                #,(syntax-case stx (? next)
+                                    [(? e) #'e]
+                                    [next stx])))
                            queries)])
          (quasisyntax/loc stx
            (#%module-begin 
             (define-model this-model
               e-stmt ...)
-            (init-generator/find-one this-model e-query)
-            ...
-            (set-box! current-model this-model)))))]))
+            (set-box! current-model this-model)
+            e-query ...))))]))
 
 (define-syntax (pl-top-interaction stx)
   (syntax-case stx (next)
