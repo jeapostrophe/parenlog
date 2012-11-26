@@ -163,7 +163,9 @@
      (append-map variables-in l)]
     [(struct sexpr-query (l))
      (append-map variables-in l)]
-    [_ empty]))
+    [(? symbol?) empty]
+    [(? list? l)
+     (append-map variables-in l)]))
 
 (define (query-answer-generator m q)
   (define init-vars (variables-in q))
