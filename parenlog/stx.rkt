@@ -2,7 +2,7 @@
 (module+ tests
   (require tests/eli-tester))
 
-(define (variable? q)
+(define (variable-stx? q)
   (and (symbol? q)
        (char-upper-case?
         (string-ref
@@ -11,8 +11,8 @@
 
 (module+ tests
   (test
-   (variable? 'Foo)
-   (variable? 'FOO)
-   (variable? 'foo) => #f))
+   (variable-stx? 'Foo)
+   (variable-stx? 'FOO)
+   (variable-stx? 'foo) => #f))
 
-(provide variable?)
+(provide variable-stx?)
