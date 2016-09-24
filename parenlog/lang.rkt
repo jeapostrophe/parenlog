@@ -60,7 +60,7 @@
     [(_ model-expr query-stx)
      (syntax/loc stx
        (begin (set-box! current-generator
-                        (query-answer-generator model-expr (compile-query query-stx)))
+                        (query-model-generator model-expr query-stx))
               (get-next-ans)))]))
 
 (define (get-next-ans)
@@ -74,7 +74,7 @@
 
 (define (print-ans ans)
   (cond
-    [(eq? generator-done ans)
+    [(eq? query-model-generator-done ans)
      (printf "no~n")]
     [else
      (if (zero? (hash-count ans))

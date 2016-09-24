@@ -1,9 +1,18 @@
 #lang racket/base
+(module+ tests
+  (require tests/eli-tester))
+
 (define (variable? q)
   (and (symbol? q)
        (char-upper-case?
-        (string-ref 
+        (string-ref
          (symbol->string q)
          0))))
 
-(provide (all-defined-out))
+(module+ tests
+  (test
+   (variable? 'Foo)
+   (variable? 'FOO)
+   (variable? 'foo) => #f))
+
+(provide variable?)
