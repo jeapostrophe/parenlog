@@ -5,15 +5,30 @@
 (module+ test
   (require chk))
 
-;; XXX implement extend-model (or include-model) for append/etc
-
-(define-model linear-logic
+(define-model list-theory
   (append () Y Y)
   (:- (append (X . Y) Z (X . YZ))
       (append Y Z YZ))
 
   (:- (racket-append X Y Z)
-      (,append X Y :- Z))
+      (,append X Y :- Z)))
+(module+ test
+  (chk (query-model list-theory (racket-append (a b) (c d) Z))
+       (list (hasheq 'Z '(a b c d)))
+       (query-model list-theory (append (a b) (c d) Z))
+       (list (hasheq 'Z '(a b c d)))
+       (query-model list-theory (append X (c d) (a b c d)))
+       (list (hasheq 'X '(a b)))
+       (query-model list-theory (append (a b) Y (a b c d)))
+       (list (hasheq 'Y '(c d)))
+
+       (query-model list-theory (append A B (a b)))
+       (list (hasheq 'A '() 'B '(a b))
+             (hasheq 'A '(a) 'B '(b))
+             (hasheq 'A '(a b) 'B '()))))
+
+(define-model linear-logic
+  #:require list-theory
   
   (proves (A) A (assume A))
 
@@ -34,20 +49,6 @@
       (proves Gamma P Pr)))
 
 (module+ test
-  (chk (query-model linear-logic (racket-append (a b) (c d) Z))
-       (list (hasheq 'Z '(a b c d)))
-       (query-model linear-logic (append (a b) (c d) Z))
-       (list (hasheq 'Z '(a b c d)))
-       (query-model linear-logic (append X (c d) (a b c d)))
-       (list (hasheq 'X '(a b)))
-       (query-model linear-logic (append (a b) Y (a b c d)))
-       (list (hasheq 'Y '(c d)))
-
-       (query-model linear-logic (append A B (a b)))
-       (list (hasheq 'A '() 'B '(a b))
-             (hasheq 'A '(a) 'B '(b))
-             (hasheq 'A '(a b) 'B '())))
-  
   (define convert-prop
     (match-lambda
       [(? symbol? a) (list 'const a)]

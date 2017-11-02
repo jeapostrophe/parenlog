@@ -4,6 +4,7 @@
           scribble/basic
           scribble/bnf
           (for-label racket/base
+                     syntax/parse
                      racket/function
                      racket/contract
                      "main.rkt"))
@@ -57,8 +58,8 @@ Here is a basic example of using Parenlog:
           (query-model family-tree
                        (adds? 5 6 Z))]
 
-@defform/subs[#:literals (:- unquote)
-              (define-model id stmt ...)
+@defform/subs[#:literals (:- unquote ~seq)
+              (define-model id (~seq #:require model-id) ... stmt ...)
               ([stmt head-query
                      (:- head-query body-query ...)]
                [head-query s-expr]
@@ -69,7 +70,7 @@ Here is a basic example of using Parenlog:
               ([id identifier?]
                [pred (any/c ... -> boolean?)]
                [fun (any/c ... -> any)])]{
- Defines @racket[id] as a Parenlog model.
+ Defines @racket[id] as a Parenlog model, extending each @racket[model-id]
 }
                                               
 @defidform[:-]{

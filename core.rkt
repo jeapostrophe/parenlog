@@ -221,4 +221,5 @@
      ()
      (reyield yield f g)
      (yield query-model-generator-done)))
-  (provide generator-map))
+  (provide generator-map
+           model-rules))

@@ -98,12 +98,16 @@
 
 (define-syntax (define-model stx)
   (syntax-parse stx
-    [(_ the-model:id paren-stmt ...)
+    [(_ the-model:id
+        (~seq #:require required-mod:id) ...
+        paren-stmt ...)
      (syntax/loc stx
        (define the-model
          (model
-          (list (paren-stmt->rule paren-stmt)
-                ...))))]))
+          (append
+           (model-rules required-mod) ...
+           (list (paren-stmt->rule paren-stmt)
+                 ...)))))]))
 
 (define-syntax (compile-query stx)
   (with-syntax ([(a-var ...) (flatten (extract-body stx))])
