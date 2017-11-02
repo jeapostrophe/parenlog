@@ -27,30 +27,35 @@ The easiest way to get started using Parenlog for Racket is with the main module
 Here is a basic example of using Parenlog:
 
 @examples[#:eval the-eval
-                 (define-model family-tree
-                   (parent rogue moria)
-                   (parent rogue larn)
-                   (parent rogue omega)
-                   (parent rogue hack)
-                   (parent moria angband)
-                   (parent hack nethack)
-                   (parent angband tome)
-                   (parent angband zangband)
-                   (parent omega adom)
-                   (parent nethack adom)
-                   (parent nethack zapm)
-                   (parent nethack slashem)
-                   (parent nethack crawl)
-                   
-                   (:- (sibling X Y)
-                       (parent Z X)
-                       (parent Z Y)
-                       (,(compose not equal?) X Y)))
-                 (query-model family-tree
-                              (sibling adom zapm))
-                 (query-model family-tree
-                              #:limit 4
-                              (sibling X Y))]
+          (define-model family-tree
+            (parent rogue moria)
+            (parent rogue larn)
+            (parent rogue omega)
+            (parent rogue hack)
+            (parent moria angband)
+            (parent hack nethack)
+            (parent angband tome)
+            (parent angband zangband)
+            (parent omega adom)
+            (parent nethack adom)
+            (parent nethack zapm)
+            (parent nethack slashem)
+            (parent nethack crawl)
+            
+            (:- (sibling X Y)
+                (parent Z X)
+                (parent Z Y)
+                (,(compose not equal?) X Y))
+
+            (:- (adds? X Y Z)
+                (,+ X Y :- Z)))
+          (query-model family-tree
+                       (sibling adom zapm))
+          (query-model family-tree
+                       #:limit 4
+                       (sibling X Y))
+          (query-model family-tree
+                       (adds? 5 6 Z))]
 
 @defform/subs[#:literals (:- unquote)
               (define-model id stmt ...)
@@ -58,10 +63,12 @@ Here is a basic example of using Parenlog:
                      (:- head-query body-query ...)]
                [head-query s-expr]
                [body-query s-expr
-                           (,fun s-expr ...)])
+                           (,pred s-expr ...)
+                           (,fun s-expr ... :- s-expr ...)])
               #:contracts
               ([id identifier?]
-               [fun (any/c ... -> boolean?)])]{
+               [pred (any/c ... -> boolean?)]
+               [fun (any/c ... -> any)])]{
  Defines @racket[id] as a Parenlog model.
 }
                                               
@@ -75,15 +82,17 @@ Here is a basic example of using Parenlog:
               #:contracts
               ([model-expr model?]
                [limit-expr number?])]{
- Queries @racket[model-expr] with @racket[body-query] until @racket[limit-expr] results are found
- or no results remain.
+ Queries @racket[model-expr] with @racket[body-query] until
+@racket[limit-expr] results are found or no results remain.
  
- Returns a value matching the contract: @racket[(listof (hash/c symbol? anc/c))]. Each value in this list is a
- substitution of @racket[body-query] that @racket[model-expr] proves.
+ Returns a value matching the contract: @racket[(listof (hash/c
+symbol? anc/c))]. Each value in this list is a substitution of
+@racket[body-query] that @racket[model-expr] proves.
 }
                                      
 @defproc[(model? [v any/c]) boolean?]{
- Returns @racket[#t] if @racket[v] was bound by @racket[define-model]; @racket[#f] otherwise.
+ Returns @racket[#t] if @racket[v] was bound by @racket[define-model];
+@racket[#f] otherwise.
 }
 
 @section{Standalone Parenlog}
@@ -92,20 +101,27 @@ Here is a basic example of using Parenlog:
 
 Parenlog can also be used as a standalone module language.
 
-At a high level, the body of a Parenlog module is the body of a @racket[define-model] form and any REPL interaction is placed within a
+At a high level, the body of a Parenlog module is the body of a
+@racket[define-model] form and any REPL interaction is placed within a
 @racket[query-model] form. There are, of course, a few caveats.
 
-First, occurrences of @racket[(? body-query)] in the module body are delayed and used as queries.
+First, occurrences of @racket[(? body-query)] in the module body are
+delayed and used as queries.
 
-Second, all query results are printed. @litchar{no} is printed when there are no answeres. @litchar{yes} is printed when there is an empty
-substitution as an answer. Otherwise, the substitution is printed using @racket[(hash-for-each _subst (curry printf "~a=~a~n"))], resulting in
-displays like:
+Second, all query results are printed. @litchar{no} is printed when
+there are no answeres. @litchar{yes} is printed when there is an empty
+substitution as an answer. Otherwise, the substitution is printed
+using @racket[(hash-for-each _subst (curry printf "~a=~a~n"))],
+resulting in displays like:
+
 @racketblock[
  #,(racketoutput "X=moria")
  #,(racketoutput "Y=larn")
 ]
 
-Third, @racket[next] searches for another answer to the last query. If there was no last query, this evaluates to an error. If there are no more answers, @litchar{done} is printed.
+Third, @racket[next] searches for another answer to the last query. If
+there was no last query, this evaluates to an error. If there are no
+more answers, @litchar{done} is printed.
 
 Here is a sample module:
 @racketmod[parenlog

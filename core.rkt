@@ -10,8 +10,9 @@
 (struct model (rules))
 (struct var (d) #:prefab)
 (struct query ())
-(struct sexpr-query query (se))
-(struct fun-query query (f args))
+(struct sexpr-query query (se) #:transparent)
+(struct fun-query query (f args) #:transparent)
+(struct fun-call query (f args anss) #:transparent)
 
 (define (unbound-var? env q1)
   (and (var? q1)
@@ -144,9 +145,6 @@
         (reyield yield id (model-env-generator/queries m new-env qs)))])
    (yield query-model-generator-done)))
 
-(define (env-derefs env xs)
-  (map (λ (x) (env-deref env x)) xs))
-
 (define (model-env-generator m env first-query)
   (generator
    ()
@@ -154,8 +152,15 @@
      [(struct sexpr-query (q-se))
       (for ([rule (in-list (model-rules m))])
         (reyield yield id (rule-env-generator m rule env q-se)))]
+     [(struct fun-call (f args anss))
+      (call-with-values
+       (λ () (apply f (env-deref env args)))
+       (λ vals
+         (define new-env (unify env anss vals))
+         (when new-env
+           (yield new-env))))]
      [(struct fun-query (f args))
-      (when (apply f (env-derefs env args))
+      (when (apply f (env-deref env args))
         (yield env))])
    (yield query-model-generator-done)))
 
@@ -163,8 +168,9 @@
   (cond
     [(bound-var? env v)
      (env-deref env (hash-ref env v))]
-    [(list? v)
-     (env-derefs env v)]
+    [(cons? v)
+     (cons (env-deref env (car v))
+           (env-deref env (cdr v)))]
     [else
      v]))
 
@@ -178,11 +184,14 @@
     [(? var? v) (list v)]
     [(struct fun-query (_ l))
      (append-map vars-in l)]
+    [(struct fun-call (_ a r))
+     (append (append-map vars-in a)
+             (append-map vars-in r))]
     [(struct sexpr-query (l))
      (append-map vars-in l)]
-    [(? symbol?) empty]
-    [(? list? l)
-     (append-map vars-in l)]))
+    [(cons a d)
+     (append (vars-in a) (vars-in d))]
+    [x empty]))
 
 (define (query-model-generator* m q)
   (define init-vars (vars-in q))
@@ -201,7 +210,7 @@
 
 (provide model model?
          var var-d
-         fun-query sexpr-query
+         fun-query fun-call sexpr-query
          make-rule
          query-model*
          query-model-generator*

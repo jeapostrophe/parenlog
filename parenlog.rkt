@@ -9,6 +9,7 @@
 (define-syntax (:- stx)
   (raise-syntax-error ':- "Cannot be used outside define-model" stx))
 
+;; XXX use syntax-classes for these things
 (begin-for-syntax
   (define (rewrite-se stx)
     (cond
@@ -16,21 +17,32 @@
        (if (variable-stx? (syntax->datum stx))
          stx
          (quasisyntax/loc stx (quote #,stx)))]
-      [(syntax->list stx)
-       => (lambda (stxs)
-            (quasisyntax/loc stx
-              (list #,@(map rewrite-se stxs))))]
+      [(cons? stx)
+       (quasisyntax
+         (cons #,(rewrite-se (car stx)) #,(rewrite-se (cdr stx))))]
+      [(syntax? stx)
+       (rewrite-se (syntax-e stx))]
+      [(empty? stx)
+       #''()]
       [else
        stx]))
 
   (define (rewrite-body-query stx)
-    (syntax-case stx (unquote)
-      [((unquote f) arg ...)
-       (quasisyntax/loc stx
-         (fun-query f #,(rewrite-se #'(arg ...))))]
-      [_
-       (quasisyntax/loc stx
-         (sexpr-query #,(rewrite-se stx)))]))
+    (syntax-parse
+        stx #:literals (unquote :- unsyntax)
+        [((unquote f) arg ... :- ans ...)
+         (quasisyntax/loc stx
+           (fun-call f #,(rewrite-se #'(arg ...))
+                     #,(rewrite-se #'(ans ...))))]
+        [((unquote f) arg ...)
+         (quasisyntax/loc stx
+           (fun-query f #,(rewrite-se #'(arg ...))))]
+        [(unsyntax se-expr)
+         (quasisyntax/loc stx
+           (sexpr-query se-expr))]
+        [_
+         (quasisyntax/loc stx
+           (sexpr-query #,(rewrite-se stx)))]))
 
   (define (extract-se stx)
     (cond
@@ -38,17 +50,24 @@
        (if (variable-stx? (syntax->datum stx))
          (list stx)
          empty)]
-      [(syntax->list stx)
-       => (λ (x) (map extract-se x))]
+      [(cons? stx)
+       (cons (extract-se (car stx)) (extract-se (cdr stx)))]
+      [(syntax? stx)
+       (extract-se (syntax-e stx))]
       [else
        empty]))
 
   (define (extract-body stx)
-    (syntax-case stx (unquote)
-      [((unquote f) arg ...)
-       (extract-se #'(arg ...))]
-      [_
-       (extract-se stx)]))
+    (syntax-parse
+        stx #:literals (unquote :- unsyntax)
+        [((unquote f) arg ... :- ans ...)
+         (extract-se #'(arg ... ans ...))]
+        [((unquote f) arg ...)
+         (extract-se #'(arg ...))]
+        [(unsyntax expr)
+         empty]
+        [_
+         (extract-se stx)]))
 
   (define (extract-vars head-stx body-stxs)
     (remove-duplicates
@@ -88,16 +107,24 @@
 
 (define-syntax (compile-query stx)
   (with-syntax ([(a-var ...) (flatten (extract-body stx))])
-    (syntax-parse stx
-      #:literals (unquote)
-      [(_ ((unquote f) arg ...))
-       (syntax/loc stx
-         (let ([a-var (var 'a-var)] ...)
-           (fun-query f #,(rewrite-se #'(arg ...)))))]
-      [(_ query)
-       (quasisyntax/loc stx
-         (let ([a-var (var 'a-var)] ...)
-           (sexpr-query #,(rewrite-se #'query))))])))
+    (syntax-parse
+        stx #:literals (unquote :- unsyntax)
+        [(_ ((unquote f) arg ... :- ans ...))
+         (syntax/loc stx
+           (let ([a-var (var 'a-var)] ...)
+             (fun-call f #,(rewrite-se #'(arg ...))
+                       #,(rewrite-se #'(ans ...)))))]
+        [(_ ((unquote f) arg ...))
+         (syntax/loc stx
+           (let ([a-var (var 'a-var)] ...)
+             (fun-query f #,(rewrite-se #'(arg ...)))))]
+        [(_ (unsyntax query-expr))
+         (quasisyntax/loc stx
+           (sexpr-query query-expr))]
+        [(_ query)
+         (quasisyntax/loc stx
+           (let ([a-var (var 'a-var)] ...)
+             (sexpr-query #,(rewrite-se #'query))))])))
 
 (define (remove-vars ht)
   (for/hasheq ([(k v) (in-hash ht)])
@@ -120,3 +147,5 @@
          define-model :-
          query-model
          query-model-generator)
+
+;; XXX Add == and _
