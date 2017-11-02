@@ -3,7 +3,7 @@
          racket/list
          racket/generator)
 (module+ tests
-  (require tests/eli-tester))
+  (require chk))
 
 (define (id x) x)
 
@@ -17,27 +17,27 @@
   (and (var? q1)
        (not (hash-has-key? env q1))))
 (module+ tests
-  (test
-   (unbound-var? #hasheq() (var 'Foo))
-   (unbound-var? #hasheq() (var 'FOO))
-   (unbound-var? #hasheq() 'foo) => #f
-   (unbound-var? (hasheq (var 'Foo) 'X) 'Foo) => #f
-   (unbound-var? (hasheq (var 'Foo) 'X) (var 'Foo)) => #f
-   (unbound-var? (hasheq (var 'Foo) 'X) (var 'FOO)) => #t
-   (unbound-var? (hasheq (var 'Foo) 'X) 'foo) => #f))
+  (chk
+   #:t (unbound-var? #hasheq() (var 'Foo))
+   #:t (unbound-var? #hasheq() (var 'FOO))
+   #:! #:t (unbound-var? #hasheq() 'foo)
+   #:! #:t (unbound-var? (hasheq (var 'Foo) 'X) 'Foo)
+   #:! #:t (unbound-var? (hasheq (var 'Foo) 'X) (var 'Foo))
+   #:! #:t (unbound-var? (hasheq (var 'Foo) 'X) (var 'FOO))
+   #:! #:t (unbound-var? (hasheq (var 'Foo) 'X) 'foo)))
 
 (define (bound-var? env q1)
   (and (var? q1)
        (hash-has-key? env q1)))
 (module+ tests
-  (test
-   (bound-var? #hasheq() (var 'Foo)) => #f
-   (bound-var? #hasheq() (var 'FOO)) => #f
-   (bound-var? #hasheq() 'foo) => #f
-   (bound-var? (hasheq (var 'Foo) 'X) 'Foo) => #f
-   (bound-var? (hasheq (var 'Foo) 'X) (var 'Foo)) => #t
-   (bound-var? (hasheq (var 'Foo) 'X) (var 'FOO)) => #f
-   (bound-var? (hasheq (var 'Foo) 'X) 'foo) => #f))
+  (chk
+   #:! #:t (bound-var? #hasheq() (var 'Foo)) 
+   #:! #:t (bound-var? #hasheq() (var 'FOO))
+   #:! #:t (bound-var? #hasheq() 'foo) 
+   #:! #:t (bound-var? (hasheq (var 'Foo) 'X) 'Foo) 
+   #:t (bound-var? (hasheq (var 'Foo) 'X) (var 'Foo)) 
+   #:! #:t (bound-var? (hasheq (var 'Foo) 'X) (var 'FOO)) 
+   #:! #:t (bound-var? (hasheq (var 'Foo) 'X) 'foo)))
 
 (define (unify env q1 q2)
   (cond
@@ -59,27 +59,26 @@
 (module+ tests
   (define var-X (var 'X))
   (define var-Y (var 'Y))
-  (test
-   (unify #hasheq() 'foo 'foo) => #hasheq()
-   (unify #hasheq() 'foo 'bar) => #f
-   (unify #hasheq() var-X 'foo) => (hasheq var-X 'foo)
-   (unify #hasheq() 'foo var-X) => (hasheq var-X 'foo)
-   (unify #hasheq() var-X var-X) => #hasheq()
-   (unify #hasheq() var-X var-Y) => (hasheq var-X var-Y)
-   (unify #hasheq([Y . foo]) var-X var-Y) => (hasheq var-Y 'foo
-                                                     var-X var-Y)
-   (unify #hasheq() '(s z) 's) => #f
-   (unify #hasheq() 's '(s z)) => #f
-   (unify #hasheq() '(s z) '(s z)) => #hasheq()
-   (unify #hasheq() (list 's var-X) '(s z)) => (hasheq var-X 'z)
-   (unify #hasheq([X . z]) (list 's var-X) '(s z)) => (hasheq var-X 'z)
-   (unify #hasheq([X . z]) (list 's var-X) '(s z z)) => #f
-   (unify #hasheq([X . z]) (list 's var-X 'z) '(s z)) => #f
+  (chk
+   (unify #hasheq() 'foo 'foo) #hasheq()
+   (unify #hasheq() 'foo 'bar) #f
+   (unify #hasheq() var-X 'foo) (hasheq var-X 'foo)
+   (unify #hasheq() 'foo var-X) (hasheq var-X 'foo)
+   (unify #hasheq() var-X var-X) #hasheq()
+   (unify #hasheq() var-X var-Y) (hasheq var-X var-Y)
+   (unify #hasheq([Y . foo]) var-X var-Y) (hasheq var-Y 'foo
+                                                  var-X var-Y)
+   (unify #hasheq() '(s z) 's) #f
+   (unify #hasheq() 's '(s z)) #f
+   (unify #hasheq() '(s z) '(s z)) #hasheq()
+   (unify #hasheq() (list 's var-X) '(s z)) (hasheq var-X 'z)
+   (unify #hasheq([X . z]) (list 's var-X) '(s z)) (hasheq var-X 'z)
+   (unify #hasheq([X . z]) (list 's var-X) '(s z z)) #f
+   (unify #hasheq([X . z]) (list 's var-X 'z) '(s z)) #f
 
    (unify #hasheq()
           '(type Gamma (if Test Then Else) Tau)
           '(type mt (if boolConst numConst numConst) num))
-   =>
    #hasheq([Gamma . mt]
            [Test . boolConst]
            [Then . numConst]
@@ -95,7 +94,6 @@
                   (Body212349 . numConst))
           '(T1212350 -> T2212351)
           '(T1212331 -> T2212330))
-   =>
    #hasheq((Gamma212327 . mt)
            (Fun212328 . (fun x numConst))
            (Arg212329 . boolConst)

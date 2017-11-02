@@ -1,6 +1,6 @@
 #lang racket/base
 (module+ tests
-  (require tests/eli-tester))
+  (require chk))
 
 (define (variable-stx? q)
   (and (symbol? q)
@@ -10,9 +10,9 @@
          0))))
 
 (module+ tests
-  (test
-   (variable-stx? 'Foo)
-   (variable-stx? 'FOO)
-   (variable-stx? 'foo) => #f))
+  (chk
+   #:t (variable-stx? 'Foo)
+   #:t (variable-stx? 'FOO)
+   #:! #:t (variable-stx? 'foo)))
 
 (provide variable-stx?)
