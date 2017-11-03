@@ -1,15 +1,11 @@
 #lang racket/base
-(module+ tests
-  (require chk))
-
 (define (variable-stx? q)
   (and (symbol? q)
        (char-upper-case?
-        (string-ref
-         (symbol->string q)
-         0))))
+        (string-ref (symbol->string q) 0))))
 
-(module+ tests
+(module+ test
+  (require chk)
   (chk
    #:t (variable-stx? 'Foo)
    #:t (variable-stx? 'FOO)
