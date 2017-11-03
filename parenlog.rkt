@@ -84,9 +84,8 @@
              #:attr rule
              (syntax/loc this-syntax
                (make-rule
-                (λ ()
-                  ;; XXX Move this into make-rule
-                  (define a-var (var (gensym 'a-var))) ...
+                '(a-var ...)
+                (λ (a-var ...)
                   (values head.compiled
                           (list body.compiled ...)))))]
     [pattern head:query-se

@@ -116,10 +116,10 @@
     (struct uniq ())
     (uniq)))
 
-;; XXX Change this so that we do the gensym
-(define (make-rule get-head&body)
+(define (make-rule var-ids get-head&body)
   (lambda (model env query)
-    (define-values (head-sans-vars body-sans-vars) (get-head&body))
+    (define vars (map (λ (v) (var (gensym v))) var-ids))
+    (define-values (head-sans-vars body-sans-vars) (apply get-head&body vars))
     (define new-env (unify env head-sans-vars query))
     (generator
      ()
