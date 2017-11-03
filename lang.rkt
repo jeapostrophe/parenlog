@@ -2,6 +2,7 @@
 (require (for-syntax racket/base
                      racket/list)
          "parenlog.rkt"
+         (submod "parenlog.rkt" support)
          "core.rkt")
 
 (provide (except-out (all-from-out racket/base)
