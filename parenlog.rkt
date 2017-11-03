@@ -9,7 +9,7 @@
          (submod "core.rkt" support))
 
 (define-syntax (:- stx)
-  (raise-syntax-error ':- "Cannot be used outside define-model" stx))
+    (raise-syntax-error ':- "Cannot be used outside define-model" stx))
 
 (begin-for-syntax
   (define (free-id-set-union* sets)
@@ -19,6 +19,10 @@
   (define-syntax-class query-se
     #:description "parenlog query s-expr"
     #:attributes (vars compiled)
+    [pattern (~datum _)
+             #:do [(define fresh-id (datum->syntax #f (gensym '_)))]
+             #:attr vars (immutable-free-id-set (list fresh-id))
+             #:with compiled fresh-id]
     [pattern x:id
              #:do [(define xid (syntax->datum #'x))]
              #:attr vars
@@ -55,6 +59,11 @@
              #:with compiled
              (syntax/loc this-syntax
                (sexpr-query dyn-q))]
+    [pattern ((~datum ==) lhs:query-se rhs:query-se)
+             #:attr vars (free-id-set-union (attribute lhs.vars) (attribute rhs.vars))
+             #:with compiled
+             (syntax/loc this-syntax
+               (unify-query lhs.compiled rhs.compiled))]
     [pattern static-q:query-se
              #:attr vars (attribute static-q.vars)
              #:with compiled
@@ -126,5 +135,3 @@
     (generator-map remove-vars (query-model-generator* m q.compiled)))
   (provide query-model-generator-done
            query-model-generator))
-
-;; XXX Add == and _

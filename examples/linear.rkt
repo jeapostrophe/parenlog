@@ -34,16 +34,22 @@
 
   ;; These rules force assumption lists to be non-empty, which removes
   ;; divergence.
+  (:- (not-empty? L)
+      (== L (_ . _)))
   
   (:- (proves Eta B (lolli-elim A B Pl Pa))
-      (append (G0 . Gamma) (D0 . Delta) Eta)
-      (proves (G0 . Gamma) (lolli A B) Pl)
-      (proves (D0 . Delta) A Pa))
+      (not-empty? Gamma)
+      (not-empty? Delta)
+      (append Gamma Delta Eta)
+      (proves Gamma (lolli A B) Pl)
+      (proves Delta A Pa))
 
   (:- (proves Eta (tensor A B) (tensor-intro A B Pa Pb))
-      (append (G0 . Gamma) (D0 . Delta) Eta)
-      (proves (G0 . Gamma) A Pa)
-      (proves (D0 . Delta) B Pb))
+      (not-empty? Gamma)
+      (not-empty? Delta)
+      (append Gamma Delta Eta)
+      (proves Gamma A Pa)
+      (proves Delta B Pb))
 
   (:- (provable? Gamma P)
       (proves Gamma P Pr)))

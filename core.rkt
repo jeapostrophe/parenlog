@@ -13,6 +13,7 @@
 (struct sexpr-query query (se) #:transparent)
 (struct fun-query query (f args) #:transparent)
 (struct fun-call query (f args anss) #:transparent)
+(struct unify-query (lhs rhs) #:transparent)
 
 (define (unbound-var? env q1)
   (and (var? q1)
@@ -32,12 +33,12 @@
        (hash-has-key? env q1)))
 (module+ tests
   (chk
-   #:! #:t (bound-var? #hasheq() (var 'Foo)) 
+   #:! #:t (bound-var? #hasheq() (var 'Foo))
    #:! #:t (bound-var? #hasheq() (var 'FOO))
-   #:! #:t (bound-var? #hasheq() 'foo) 
-   #:! #:t (bound-var? (hasheq (var 'Foo) 'X) 'Foo) 
-   #:t (bound-var? (hasheq (var 'Foo) 'X) (var 'Foo)) 
-   #:! #:t (bound-var? (hasheq (var 'Foo) 'X) (var 'FOO)) 
+   #:! #:t (bound-var? #hasheq() 'foo)
+   #:! #:t (bound-var? (hasheq (var 'Foo) 'X) 'Foo)
+   #:t (bound-var? (hasheq (var 'Foo) 'X) (var 'Foo))
+   #:! #:t (bound-var? (hasheq (var 'Foo) 'X) (var 'FOO))
    #:! #:t (bound-var? (hasheq (var 'Foo) 'X) 'foo)))
 
 (define (unify env q1 q2)
@@ -105,7 +106,8 @@
            (Var212348 . x)
            (Body212349 . numConst))
 
-   (unify #hasheq((X81793 . clemens) (Y81794 . montague)
+   (unify #hasheq((X81793 . clemens)
+                  (Y81794 . montague)
                   (X81827 . Y81794) (Y81828 . X81793)
                   (X81837 . X81827) (Y81838 . Z81829))
           '(advisee tarski montague)
@@ -121,11 +123,10 @@
     (define vars (map (λ (v) (var (gensym v))) var-ids))
     (define-values (head-sans-vars body-sans-vars) (apply get-head&body vars))
     (define new-env (unify env head-sans-vars query))
-    (generator
-     ()
-     (when new-env
-       (reyield yield id (model-env-generator/queries model new-env body-sans-vars)))
-     (yield query-model-generator-done))))
+    (generator ()
+      (when new-env
+        (reyield yield id (model-env-generator/queries model new-env body-sans-vars)))
+      (yield query-model-generator-done))))
 
 (define (rule-env-generator m r env q)
   (r m env q))
@@ -135,34 +136,36 @@
     (yield (f ans))))
 
 (define (model-env-generator/queries m env qs)
-  (generator
-   ()
-   (match qs
-     [(list) (yield env)]
-     [(list-rest q1 qs)
-      (for ([new-env (in-producer (model-env-generator m env q1)
-                                  query-model-generator-done)])
-        (reyield yield id (model-env-generator/queries m new-env qs)))])
-   (yield query-model-generator-done)))
+  (generator ()
+    (match qs
+      [(list) (yield env)]
+      [(list-rest q1 qs)
+       (for ([new-env (in-producer (model-env-generator m env q1)
+                                   query-model-generator-done)])
+         (reyield yield id (model-env-generator/queries m new-env qs)))])
+    (yield query-model-generator-done)))
 
 (define (model-env-generator m env first-query)
-  (generator
-   ()
-   (match first-query
-     [(struct sexpr-query (q-se))
-      (for ([rule (in-list (model-rules m))])
-        (reyield yield id (rule-env-generator m rule env q-se)))]
-     [(struct fun-call (f args anss))
-      (call-with-values
-       (λ () (apply f (env-deref env args)))
-       (λ vals
-         (define new-env (unify env anss vals))
-         (when new-env
-           (yield new-env))))]
-     [(struct fun-query (f args))
-      (when (apply f (env-deref env args))
-        (yield env))])
-   (yield query-model-generator-done)))
+  (generator ()
+    (match first-query
+      [(sexpr-query q-se)
+       (for ([rule (in-list (model-rules m))])
+         (reyield yield id (rule-env-generator m rule env q-se)))]
+      [(fun-call f args anss)
+       (call-with-values
+        (λ () (apply f (env-deref env args)))
+        (λ vals
+          (define new-env (unify env anss vals))
+          (when new-env
+            (yield new-env))))]
+      [(fun-query f args)
+       (when (apply f (env-deref env args))
+         (yield env))]
+      [(unify-query lhs rhs)
+       (define new-env (unify env lhs rhs))
+       (when new-env
+         (yield new-env))])
+    (yield query-model-generator-done)))
 
 (define (env-deref env v)
   (cond
@@ -179,28 +182,26 @@
                #:when (member k l))
     (values k (env-deref env v))))
 
-(define (vars-in q)
-  (match q
+(define vars-in
+  (match-lambda
     [(? var? v) (list v)]
-    [(struct fun-query (_ l))
-     (append-map vars-in l)]
-    [(struct fun-call (_ a r))
-     (append (append-map vars-in a)
-             (append-map vars-in r))]
-    [(struct sexpr-query (l))
-     (append-map vars-in l)]
-    [(cons a d)
-     (append (vars-in a) (vars-in d))]
+    [(or (sexpr-query l)
+         (fun-query _ l))
+     (vars-in l)]
+    [(or (fun-call _ x y)
+         (unify-query x y)
+         (cons x y))
+     (append (vars-in x) (vars-in y))]
+    [(? query?) (error 'vars-in "Missed case")]
     [x empty]))
 
 (define (query-model-generator* m q)
   (define init-vars (vars-in q))
-  (generator
-   ()
-   (for ([ans (in-producer (model-env-generator m (hasheq) q)
-                           query-model-generator-done)])
-     (yield (env-restrict ans init-vars)))
-   (yield query-model-generator-done)))
+  (generator ()
+    (for ([ans (in-producer (model-env-generator m (hasheq) q)
+                            query-model-generator-done)])
+      (yield (env-restrict ans init-vars)))
+    (yield query-model-generator-done)))
 
 (define (query-model* m q #:limit [limit +inf.0])
   (for/list ([ans (in-producer (query-model-generator* m q)
@@ -210,16 +211,15 @@
 
 (provide model model?
          var var-d
-         fun-query fun-call sexpr-query
+         fun-query fun-call sexpr-query unify-query
          make-rule
          query-model*
          query-model-generator*
          query-model-generator-done)
 (module+ support
   (define (generator-map f g)
-    (generator
-     ()
-     (reyield yield f g)
-     (yield query-model-generator-done)))
+    (generator ()
+      (reyield yield f g)
+      (yield query-model-generator-done)))
   (provide generator-map
            model-rules))
