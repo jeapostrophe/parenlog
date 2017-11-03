@@ -74,6 +74,8 @@ Here is a basic example of using Parenlog:
 Defines @racket[id] as a Parenlog model, extending each @racket[model-id].
 
 @racket[_] counts as variable that is unique at every occurrence.
+
+A @racket[_s-expr] may contain @racket[unsyntax] to escape to Racket.
 }
                                               
 @defidform[:-]{

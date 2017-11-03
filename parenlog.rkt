@@ -34,6 +34,9 @@
                #'x
                (syntax/loc this-syntax
                  'x))]
+    [pattern ((~literal unsyntax) dyn-q:expr)
+             #:attr vars (immutable-free-id-set)
+             #:with compiled #'dyn-q]
     [pattern (a:query-se . d:query-se)
              #:attr vars (free-id-set-union (attribute a.vars) (attribute d.vars))
              #:with compiled #'(cons a.compiled d.compiled)]
@@ -42,7 +45,7 @@
   (define-syntax-class query-form
     #:description "parenlog query form"
     #:attributes (vars compiled)
-    #:literals (unquote :- unsyntax)
+    #:literals (unquote :-)
     [pattern ((unquote f:expr) arg:query-se ... :- ans:query-se ...)
              #:attr vars (free-id-set-union* (attribute arg.vars))
              #:with compiled
@@ -53,12 +56,7 @@
              #:attr vars (free-id-set-union* (attribute arg.vars))
              #:with compiled
              (syntax/loc this-syntax
-               (fun-query f (list arg.compiled ...)))]
-    [pattern (unsyntax dyn-q:expr)
-             #:attr vars (immutable-free-id-set)
-             #:with compiled
-             (syntax/loc this-syntax
-               (sexpr-query dyn-q))]
+               (fun-query f (list arg.compiled ...)))]    
     [pattern ((~datum ==) lhs:query-se rhs:query-se)
              #:attr vars (free-id-set-union (attribute lhs.vars) (attribute rhs.vars))
              #:with compiled
