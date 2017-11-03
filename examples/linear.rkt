@@ -33,7 +33,8 @@
   (proves (A) A (assume A))
 
   ;; These rules force assumption lists to be non-empty, which removes
-  ;; divergence.
+  ;; divergence. There should be a better way, not sure what it is
+  ;; though.
   (:- (not-empty? L)
       (== L (_ . _)))
   
