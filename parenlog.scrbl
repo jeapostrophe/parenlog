@@ -14,7 +14,7 @@
      (the-eval `(require parenlog))
      the-eval))
 
-@title[#:tag "top"]{@bold{Parenlog}}
+@title[#:tag "top"]{Parenlog}
 @author[(author+email "Jay McCarthy" "jay@racket-lang.org")]
 
 This package contains an implementation of a language very similar to pure @link["http://en.wikipedia.org/wiki/Prolog"]{Prolog}, except with parenthetical notation.
